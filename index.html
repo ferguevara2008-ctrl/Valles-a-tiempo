@@ -7,7 +7,6 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
-
 body{
 margin:0;
 font-family: Arial;
@@ -35,13 +34,6 @@ background:white;
 padding:10px;
 border-radius:10px;
 z-index:1000;
-box-shadow:0 2px 8px rgba(0,0,0,0.2);
-}
-
-.topbar input{
-width:100%;
-border:none;
-outline:none;
 }
 
 #map{
@@ -71,7 +63,6 @@ border-radius:50%;
 cursor:pointer;
 z-index:1000;
 }
-
 </style>
 
 </head>
@@ -90,7 +81,7 @@ z-index:1000;
 
 <div class="panel">
 <h3>🚌 Ruta Boulevard</h3>
-<div id="lista"></div>
+<div id="lista">Cargando tiempos...</div>
 </div>
 
 </div>
@@ -121,6 +112,7 @@ L.marker(p.coords).addTo(map).bindPopup(p.nombre);
 // GPS usuario
 var userMarker;
 
+if(navigator.geolocation){
 navigator.geolocation.watchPosition(pos=>{
 let lat = pos.coords.latitude;
 let lon = pos.coords.longitude;
@@ -132,6 +124,7 @@ userMarker = L.marker([lat,lon]).addTo(map)
 .bindPopup("Tu ubicación");
 }
 });
+}
 
 function centrarUsuario(){
 if(userMarker){
@@ -139,7 +132,7 @@ map.setView(userMarker.getLatLng(), 16);
 }
 }
 
-// distancia real
+// distancia
 function distancia(a,b){
 let R = 6371;
 let dLat = (b[0]-a[0]) * Math.PI/180;
@@ -156,43 +149,48 @@ let c = 2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 return R*c;
 }
 
-// cargar ruta real
+// cargar ruta
 fetch("ruta.geojson")
-.then(res=>res.json())
+.then(res=>{
+if(!res.ok) throw new Error("No se encontró ruta.geojson");
+return res.json();
+})
 .then(data=>{
 
 let ruta = [];
 
-// dibujar ruta con tráfico
 data.features.forEach(f=>{
-
 if(f.geometry.type==="LineString"){
 
 let coords = f.geometry.coordinates.map(c=>[c[1],c[0]]);
-
 ruta = coords;
 
-// dividir en segmentos con tráfico
+// dibujar ruta
 for(let i=0;i<coords.length-1;i++){
-
 let tipo = ["green","orange","red"][Math.floor(Math.random()*3)];
 
 L.polyline([coords[i],coords[i+1]],{
 color: tipo,
 weight:5
 }).addTo(map);
-
 }
-
 }
 });
 
-// iniciar bus
+if(ruta.length === 0){
+alert("Ruta vacía");
+return;
+}
+
 iniciarBus(ruta);
 
+})
+.catch(err=>{
+console.error(err);
+document.getElementById("lista").innerHTML = "Error cargando ruta";
 });
 
-// simulación bus
+// bus
 function iniciarBus(ruta){
 
 var busIcon = L.icon({
@@ -204,7 +202,9 @@ var bus = L.marker(ruta[0], {icon:busIcon}).addTo(map);
 
 var i=0;
 
-// mover
+// 🔥 CALCULAR DESDE EL INICIO
+calcularTiempos(ruta[0]);
+
 setInterval(()=>{
 
 i++;
@@ -214,25 +214,26 @@ bus.setLatLng(ruta[i]);
 
 calcularTiempos(ruta[i]);
 
-},100);
+},200);
 
 }
 
 // tiempos
 function calcularTiempos(pos){
 
+if(!pos) return;
+
 let html="";
 
 paradas.forEach(p=>{
 
 let d = distancia(pos,p.coords);
-
-// velocidad promedio
 let v = 25;
-
 let t = (d/v)*60;
 
-html += `<div>${p.nombre}: ${t.toFixed(1)} min</div>`;
+html += `<div style="padding:6px; border-bottom:1px solid #eee;">
+🛑 ${p.nombre}: <b>${t.toFixed(1)} min</b>
+</div>`;
 
 });
 

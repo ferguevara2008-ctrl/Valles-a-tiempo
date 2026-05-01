@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Valles a Tiempo</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+
+body{
+margin:0;
+font-family: Arial;
+background:#ddd;
+display:flex;
+justify-content:center;
+}
+
+.app{
+width:360px;
+height:640px;
+background:white;
+border-radius:20px;
+overflow:hidden;
+position:relative;
+box-shadow:0 10px 30px rgba(0,0,0,0.3);
+}
+
+.topbar{
+position:absolute;
+top:10px;
+left:10px;
+right:10px;
+background:white;
+padding:10px;
+border-radius:10px;
+z-index:1000;
+box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+
+.topbar input{
+width:100%;
+border:none;
+outline:none;
+}
+
+#map{
+height:100%;
+}
+
+.panel{
+position:absolute;
+bottom:0;
+left:0;
+right:0;
+background:white;
+border-radius:20px 20px 0 0;
+padding:15px;
+z-index:1000;
+max-height:40%;
+overflow:auto;
+}
+
+.gps-btn{
+position:absolute;
+bottom:120px;
+right:15px;
+background:white;
+padding:10px;
+border-radius:50%;
+cursor:pointer;
+z-index:1000;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+<div class="topbar">
+<input placeholder="Buscar ruta...">
+</div>
+
+<div id="map"></div>
+
+<div class="gps-btn" onclick="centrarUsuario()">📍</div>
+
+<div class="panel">
+<h3>🚌 Ruta Boulevard</h3>
+<div id="lista"></div>
+</div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+// mapa
+var map = L.map('map').setView([21.99, -99.01], 14);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// paradas
+var paradas = [
+{nombre:"Central", coords:[21.9692, -98.9977]},
+{nombre:"Volkswagen", coords:[21.9755, -99.0025]},
+{nombre:"Agua Alaska", coords:[21.9832, -99.0087]},
+{nombre:"BBVA", coords:[21.9855, -99.0108]},
+{nombre:"Telmex", coords:[21.9872, -99.0116]},
+{nombre:"Norte", coords:[21.9915, -99.0120]}
+];
+
+paradas.forEach(p=>{
+L.marker(p.coords).addTo(map).bindPopup(p.nombre);
+});
+
+// GPS usuario
+var userMarker;
+
+navigator.geolocation.watchPosition(pos=>{
+let lat = pos.coords.latitude;
+let lon = pos.coords.longitude;
+
+if(userMarker){
+userMarker.setLatLng([lat,lon]);
+}else{
+userMarker = L.marker([lat,lon]).addTo(map)
+.bindPopup("Tu ubicación");
+}
+});
+
+function centrarUsuario(){
+if(userMarker){
+map.setView(userMarker.getLatLng(), 16);
+}
+}
+
+// distancia real
+function distancia(a,b){
+let R = 6371;
+let dLat = (b[0]-a[0]) * Math.PI/180;
+let dLon = (b[1]-a[1]) * Math.PI/180;
+
+let lat1 = a[0]*Math.PI/180;
+let lat2 = b[0]*Math.PI/180;
+
+let x = Math.sin(dLat/2)**2 +
+Math.cos(lat1)*Math.cos(lat2) *
+Math.sin(dLon/2)**2;
+
+let c = 2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+return R*c;
+}
+
+// cargar ruta real
+fetch("ruta.geojson")
+.then(res=>res.json())
+.then(data=>{
+
+let ruta = [];
+
+// dibujar ruta con tráfico
+data.features.forEach(f=>{
+
+if(f.geometry.type==="LineString"){
+
+let coords = f.geometry.coordinates.map(c=>[c[1],c[0]]);
+
+ruta = coords;
+
+// dividir en segmentos con tráfico
+for(let i=0;i<coords.length-1;i++){
+
+let tipo = ["green","orange","red"][Math.floor(Math.random()*3)];
+
+L.polyline([coords[i],coords[i+1]],{
+color: tipo,
+weight:5
+}).addTo(map);
+
+}
+
+}
+});
+
+// iniciar bus
+iniciarBus(ruta);
+
+});
+
+// simulación bus
+function iniciarBus(ruta){
+
+var busIcon = L.icon({
+iconUrl:"https://cdn-icons-png.flaticon.com/512/61/61231.png",
+iconSize:[30,30]
+});
+
+var bus = L.marker(ruta[0], {icon:busIcon}).addTo(map);
+
+var i=0;
+
+// mover
+setInterval(()=>{
+
+i++;
+if(i>=ruta.length) i=0;
+
+bus.setLatLng(ruta[i]);
+
+calcularTiempos(ruta[i]);
+
+},100);
+
+}
+
+// tiempos
+function calcularTiempos(pos){
+
+let html="";
+
+paradas.forEach(p=>{
+
+let d = distancia(pos,p.coords);
+
+// velocidad promedio
+let v = 25;
+
+let t = (d/v)*60;
+
+html += `<div>${p.nombre}: ${t.toFixed(1)} min</div>`;
+
+});
+
+document.getElementById("lista").innerHTML = html;
+
+}
+
+</script>
+
+</body>
+</html>

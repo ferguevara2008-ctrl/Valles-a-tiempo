@@ -16,8 +16,8 @@ justify-content:center;
 }
 
 .app{
-width:360px;
-height:640px;
+width:460px;
+height:740px;
 background:white;
 border-radius:20px;
 overflow:hidden;
@@ -90,12 +90,10 @@ z-index:1000;
 
 <script>
 
-// mapa
 var map = L.map('map').setView([21.99, -99.01], 14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-// paradas
 var paradas = [
 {nombre:"Central", coords:[21.9692, -98.9977]},
 {nombre:"Volkswagen", coords:[21.9755, -99.0025]},
@@ -109,7 +107,6 @@ paradas.forEach(p=>{
 L.marker(p.coords).addTo(map).bindPopup(p.nombre);
 });
 
-// GPS usuario
 var userMarker;
 
 if(navigator.geolocation){
@@ -132,7 +129,6 @@ map.setView(userMarker.getLatLng(), 16);
 }
 }
 
-// distancia
 function distancia(a,b){
 let R = 6371;
 let dLat = (b[0]-a[0]) * Math.PI/180;
@@ -149,7 +145,6 @@ let c = 2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 return R*c;
 }
 
-// cargar ruta
 fetch("ruta.geojson")
 .then(res=>{
 if(!res.ok) throw new Error("No se encontró ruta.geojson");
@@ -165,32 +160,44 @@ if(f.geometry.type==="LineString"){
 let coords = f.geometry.coordinates.map(c=>[c[1],c[0]]);
 ruta = coords;
 
-// dibujar ruta
-for(let i=0;i<coords.length-1;i++){
-let tipo = ["green","orange","red"][Math.floor(Math.random()*3)];
+function colorPorTrafico(){
+    let r = Math.random();
 
-L.polyline([coords[i],coords[i+1]],{
-color: tipo,
-weight:5
-}).addTo(map);
+    if(r < 0.5) return "green";     // tráfico fluido
+    if(r < 0.8) return "orange";    // tráfico medio
+    return "red";                   // tráfico alto
 }
-}
+
+let ruta = [];
+
+data.features.forEach(f => {
+
+    if(f.geometry.type === "LineString"){
+
+        let coords = f.geometry.coordinates.map(c => [c[1], c[0]]);
+        ruta = coords;
+        for(let i = 0; i < coords.length - 1; i++){
+
+            let color = colorPorTrafico();
+
+            L.polyline([coords[i], coords[i+1]], {
+                color: color,
+                weight: 7,       
+                opacity: 0.9     
+            }).addTo(map);
+
+        }
+        map.fitBounds(coords);
+
+    }
+
 });
 
-if(ruta.length === 0){
-alert("Ruta vacía");
-return;
+if(ruta.length > 0){
+    iniciarBus(ruta);
+} else {
+    alert("No se pudo cargar la ruta");
 }
-
-iniciarBus(ruta);
-
-})
-.catch(err=>{
-console.error(err);
-document.getElementById("lista").innerHTML = "Error cargando ruta";
-});
-
-// bus
 function iniciarBus(ruta){
 
 var busIcon = L.icon({
@@ -202,7 +209,6 @@ var bus = L.marker(ruta[0], {icon:busIcon}).addTo(map);
 
 var i=0;
 
-// 🔥 CALCULAR DESDE EL INICIO
 calcularTiempos(ruta[0]);
 
 setInterval(()=>{
@@ -218,27 +224,34 @@ calcularTiempos(ruta[i]);
 
 }
 
-// tiempos
 function calcularTiempos(pos){
 
 if(!pos) return;
 
-let html="";
+let html = "<b>Tiempo estimado:</b><br>";
 
 paradas.forEach(p=>{
 
-let d = distancia(pos,p.coords);
-let v = 25;
-let t = (d/v)*60;
+    let d = distancia(pos, p.coords);
+    let v = 25;
+    let t = (d/v)*60;
 
-html += `<div style="padding:6px; border-bottom:1px solid #eee;">
-🛑 ${p.nombre}: <b>${t.toFixed(1)} min</b>
-</div>`;
+    html += `
+    <div style="
+        padding:8px;
+        margin:5px 0;
+        background:#f5f5f5;
+        border-radius:8px;
+        font-size:14px;
+    ">
+        🛑 ${p.nombre}<br>
+        ⏱ <b>${t.toFixed(1)} min</b>
+    </div>
+    `;
 
 });
 
 document.getElementById("lista").innerHTML = html;
-
 }
 
 </script>

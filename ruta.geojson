@@ -1,7 +1,27 @@
 {
   "type": "FeatureCollection",
-  "generator": "overpass-turbo",
-  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-  "timestamp": "2026-05-01T16:18:14Z",
-  "features": []
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Boulevard México-Laredo"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-98.9977,21.9692],
+          [-99.0005,21.9725],
+          [-99.0025,21.9755],
+          [-99.0045,21.9785],
+          [-99.0065,21.9810],
+          [-99.0087,21.9832],
+          [-99.0108,21.9855],
+          [-99.0116,21.9872],
+          [-99.0120,21.9885],
+          [-99.0122,21.9900],
+          [-99.0120,21.9915]
+        ]
+      }
+    }
+  ]
 }

@@ -103,16 +103,34 @@ setTimeout(() => {
 }, 500);
     
 var paradas = [
-{nombre:"Central", coords:[21.9692, -98.9977]},
-{nombre:"Volkswagen", coords:[21.9755, -99.0025]},
-{nombre:"Agua Alaska", coords:[21.9832, -99.0087]},
-{nombre:"BBVA", coords:[21.9855, -99.0108]},
-{nombre:"Telmex", coords:[21.9872, -99.0116]},
-{nombre:"Norte", coords:[21.9915, -99.0120]}
+{nombre:"Puente Negro", coords:[21.9685, -98.9968]},
+{nombre:"Lomas del Real", coords:[21.9715, -98.9995]},
+{nombre:"Soriana Valle Alto", coords:[21.9748, -99.0020]},
+{nombre:"Colonia Altavista", coords:[21.9775, -99.0045]},
+{nombre:"Hospital General", coords:[21.9802, -99.0068]},
+{nombre:"Central de Autobuses", coords:[21.9825, -99.0085]},
+{nombre:"Glorieta Hidalgo (Lado Norte)", coords:[21.9845, -99.0098]},
+{nombre:"Hotel Valles", coords:[21.9860, -99.0105]},
+{nombre:"Calle Tamaulipas (Zona de Transferencia)", coords:[21.9872, -99.0116]},
+{nombre:"Calle Abasolo (Transpais)", coords:[21.9885, -99.0120]},
+{nombre:"Calle Juárez", coords:[21.9895, -99.0122]},
+{nombre:"Eco-Centralita", coords:[21.9905, -99.0123]},
+{nombre:"UASLP Campus Valles", coords:[21.9915, -99.0120]},
+{nombre:"ICESU / Secundaria 2", coords:[21.9925, -99.0115]},
+{nombre:"Glorieta Pedro Antonio Santos (P.A.S.)", coords:[21.9935, -99.0105]},
+{nombre:"CBTis 46", coords:[21.9945, -99.0095]},
+{nombre:"36° Batallón de Infantería", coords:[21.9955, -99.0085]}
 ];
 
 paradas.forEach(p=>{
-L.marker(p.coords).addTo(map).bindPopup(p.nombre);
+L.circleMarker(p.coords, {
+    radius:6,
+    color:"#007bff",
+    fillColor:"#007bff",
+    fillOpacity:0.9
+})
+.addTo(map)
+.bindPopup("🛑 " + p.nombre);
 });
 
 var userMarker;
@@ -242,30 +260,34 @@ fetch("ruta.geojson")
 
 function calcularTiempos(pos){
 
-    if(!pos) return;
+if(!pos) return;
 
-    let html = "<b>Tiempo estimado:</b><br>";
+let indexBus = 0;
+let minDist = Infinity;
 
-    paradas.forEach(p=>{
+rutaGlobal.forEach((p, i)=>{
+    let d = distancia(pos, p);
+    if(d < minDist){
+        minDist = d;
+        indexBus = i;
+    }
+});
 
-        let d = distancia(pos, p.coords);
-        let v = 25;
-        let t = (d/v)*60;
+let html = "<b>Tiempo estimado (cada 15 min):</b>";
 
-        html += `
-        <div style="
-            padding:8px;
-            margin:5px 0;
-            background:#f5f5f5;
-            border-radius:8px;
-        ">
-            🛑 ${p.nombre}<br>
-            ⏱ <b>${t.toFixed(1)} min</b>
-        </div>
-        `;
-    });
+paradas.forEach((p, i)=>{
 
-    document.getElementById("lista").innerHTML = html;
+    let tiempo = (i * 15);
+
+    html += `
+    <div style="padding:8px; margin:5px 0; background:#f5f5f5; border-radius:8px;">
+        🛑 ${p.nombre}<br>
+        ⏱ <b>${tiempo} min</b>
+    </div>
+    `;
+});
+
+document.getElementById("lista").innerHTML = html;
 }
 
 </script>

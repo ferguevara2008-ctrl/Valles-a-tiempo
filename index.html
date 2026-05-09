@@ -1,215 +1,136 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Valles a Tiempo</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
-<style>
-body{
-margin:0;
-font-family: Arial;
-background:#ddd;
-display:flex;
-justify-content:center;
-}
-
-html, body {
-height: 100%;
-}
-    
-.app{
-width:460px;
-height:740px;
-background:white;
-border-radius:20px;
-overflow:hidden;
-position:relative;
-box-shadow:0 10px 30px rgba(0,0,0,0.3);
-}
-
-.topbar{
-position:absolute;
-top:10px;
-left:10px;
-right:10px;
-background:white;
-padding:10px;
-border-radius:10px;
-z-index:1000;
-}
-
-#map{
-height:100%;
-}
-
-.panel{
-position:absolute;
-bottom:0;
-left:0;
-right:0;
-background:white;
-border-radius:20px 20px 0 0;
-padding:15px;
-z-index:1000;
-max-height:40%;
-overflow:auto;
-}
-
-.gps-btn{
-position:absolute;
-bottom:120px;
-right:15px;
-background:white;
-padding:10px;
-border-radius:50%;
-cursor:pointer;
-z-index:1000;
-}
-</style>
-
+    <meta charset="UTF-8">
+    <title>Valles a Tiempo - Ruta Boulevard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        body { margin:0; font-family: Arial, sans-serif; background:#ddd; display:flex; justify-content:center; height: 100vh; }
+        .app { width:460px; height:740px; background:white; border-radius:20px; overflow:hidden; position:relative; box-shadow:0 10px 30px rgba(0,0,0,0.3); margin-top: 20px; }
+        #map { height:100%; }
+        .topbar { position:absolute; top:10px; left:10px; right:10px; background:white; padding:10px; border-radius:10px; z-index:1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .topbar input { width: 95%; border: none; outline: none; font-size: 16px; }
+        .panel { position:absolute; bottom:0; left:0; right:0; background:white; border-radius:20px 20px 0 0; padding:15px; z-index:1000; max-height:40%; overflow-y:auto; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+        .gps-btn { position:absolute; bottom:120px; right:15px; background:white; width: 40px; height: 40px; border-radius:50%; cursor:pointer; z-index:1000; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .tiempo-item { padding:10px; margin:5px 0; border-radius:8px; border-left: 5px solid #ccc; background: #f9f9f9; }
+        .proxima { background: #e7f3ff; border-left-color: #007bff; }
+    </style>
 </head>
-
 <body>
 
 <div class="app">
-
-<div class="topbar">
-<input placeholder="Buscar ruta...">
-</div>
-
-<div id="map"></div>
-
-<div class="gps-btn" onclick="centrarUsuario()">📍</div>
-
-<div class="panel">
-<h3>🚌 Ruta Boulevard</h3>
-<div id="lista">Cargando tiempos...</div>
-</div>
-
+    <div class="topbar"><input placeholder="Buscar parada o ruta..."></div>
+    <div id="map"></div>
+    <div class="gps-btn" onclick="centrarUsuario()">📍</div>
+    <div class="panel">
+        <h3 style="margin-top:0">🚌 Ruta Boulevard</h3>
+        <div id="lista">Calculando arribos...</div>
+    </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
-var map = L.map('map').setView([21.99, -99.01], 14);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    var map = L.map('map').setView([21.9870, -99.0116], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-var paradas = [
-    {nombre:"Puente Negro", coords:[21.9984, -99.0103]},
-    {nombre:"Soriana Valle Alto", coords:[22.0022, -99.0089]},
-    {nombre:"CBTis 46", coords:[21.9944, -99.0094]},
-    {nombre:"36° Batallón de Infantería", coords:[21.9958, -99.0082]},
-    {nombre:"Glorieta Pedro Antonio Santos (P.A.S.)", coords:[21.9934, -99.0104]},
-    {nombre:"ICESU / Secundaria 2", coords:[21.9922, -99.0114]},
-    {nombre:"UASLP Campus Valles", coords:[21.9908, -99.0121]},
-    {nombre:"Eco-Centralita", coords:[21.9900, -99.0123]},
-    {nombre:"Calle Juárez", coords:[21.9893, -99.0122]},
-    {nombre:"Calle Abasolo (Transpais)", coords:[21.9882, -99.0120]},
-    {nombre:"Calle Tamaulipas (Zona de Transferencia)", coords:[21.9870, -99.0116]},
-    {nombre:"Hotel Valles", coords:[21.9858, -99.0104]},
-    {nombre:"Glorieta Hidalgo (Lado Norte)", coords:[21.9844, -99.0098]},
-    {nombre:"Central de Autobuses", coords:[21.9822, -99.0083]},
-    {nombre:"Hospital General", coords:[21.9805, -99.0069]},
-    {nombre:"Colonia Altavista", coords:[21.9772, -99.0044]},
-    {nombre:"Lomas del Real", coords:[21.9735, -99.0015]}
-];
+    var paradas = [
+        {nombre:"Puente Negro", coords:[21.9984, -99.0103]},
+        {nombre:"Soriana Valle Alto", coords:[22.0022, -99.0089]},
+        {nombre:"CBTis 46", coords:[21.9944, -99.0094]},
+        {nombre:"36° Batallón de Infantería", coords:[21.9958, -99.0082]},
+        {nombre:"Glorieta P.A.S.", coords:[21.9934, -99.0104]},
+        {nombre:"UASLP Campus Valles", coords:[21.9908, -99.0121]},
+        {nombre:"Eco-Centralita", coords:[21.9900, -99.0123]},
+        {nombre:"Calle Abasolo (Transpais)", coords:[21.9882, -99.0120]},
+        {nombre:"Hotel Valles", coords:[21.9858, -99.0104]},
+        {nombre:"Central de Autobuses", coords:[21.9822, -99.0083]},
+        {nombre:"Hospital General", coords:[21.9805, -99.0069]},
+        {nombre:"Lomas del Real", coords:[21.9735, -99.0015]}
+    ];
 
-// Dibujar paradas en el mapa
-paradas.forEach(p => {
-    L.circleMarker(p.coords, {
-        radius: 6,
-        color: "#007bff",
-        fillColor: "#007bff",
-        fillOpacity: 0.9
-    }).addTo(map).bindPopup("🛑 " + p.nombre);
-});
-
-var paradaActual = 0;
-var tiempoRestante = 2; 
-const VELOCIDAD_BUS = 18; 
-
-function distancia(a, b) {
-    let R = 6371;
-    let dLat = (b[0] - a[0]) * Math.PI / 180;
-    let dLon = (b[1] - a[1]) * Math.PI / 180;
-    let x = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-    return R * (2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x)));
-}
-
-var intervalosTiempos = paradas.map((p, i) => {
-    let siguiente = paradas[(i + 1) % paradas.length];
-    let d = distancia(p.coords, siguiente.coords);
-    let min = (d / VELOCIDAD_BUS) * 60;
-    return Math.max(10, Math.min(20, min + 7)); 
-});
-
-var userMarker;
-if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(pos => {
-        let lat = pos.coords.latitude, lon = pos.coords.longitude;
-        if (userMarker) userMarker.setLatLng([lat, lon]);
-        else userMarker = L.marker([lat, lon]).addTo(map).bindPopup("Tu ubicación");
+    paradas.forEach(p => {
+        L.circleMarker(p.coords, {radius:6, color:"#007bff", fillColor:"#007bff", fillOpacity:0.8})
+        .addTo(map).bindPopup(p.nombre);
     });
-}
 
-function centrarUsuario() {
-    if (userMarker) map.setView(userMarker.getLatLng(), 16);
-}
+    const TIEMPO_MIN = 10;
+    const TIEMPO_MAX = 20;
+    
+    function generarAzar() {
+        return Math.floor(Math.random() * (TIEMPO_MAX - TIEMPO_MIN + 1)) + TIEMPO_MIN;
+    }
 
-fetch("ruta.geojson")
+    var paradaActual = 0;
+    var tiempoRestante = 2;
+    var intervalos = paradas.map(() => generarAzar());
+
+    var userMarker;
+    if(navigator.geolocation){
+        navigator.geolocation.watchPosition(pos => {
+            let lat = pos.coords.latitude, lon = pos.coords.longitude;
+            if(userMarker) userMarker.setLatLng([lat,lon]);
+            else userMarker = L.marker([lat,lon]).addTo(map).bindPopup("Estás aquí");
+        });
+    }
+
+    function centrarUsuario() { if(userMarker) map.setView(userMarker.getLatLng(), 16); }
+
+    fetch("ruta.geojson")
     .then(res => res.json())
     .then(data => {
-        let coordsRuta = data.features[0].geometry.coordinates.map(c => [c[1], c[0]]);
-        L.polyline(coordsRuta, {color: 'green', weight: 5, opacity: 0.6}).addTo(map);
-        iniciarBus(coordsRuta);
-    }).catch(e => console.log("Error cargando GeoJSON: ", e));
+        let rutaCoords = data.features[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        L.polyline(rutaCoords, {color: '#28a745', weight: 6, opacity: 0.7}).addTo(map);
+        iniciarMovimiento(rutaCoords);
+    }).catch(err => console.error("Falta archivo ruta.geojson"));
 
-function iniciarBus(ruta) {
-    var busIcon = L.icon({
-        iconUrl: "https://cdn-icons-png.flaticon.com/512/61/61231.png",
-        iconSize: [30, 30]
-    });
-    var bus = L.marker(ruta[0], {icon: busIcon}).addTo(map);
-    var indexRuta = 0;
+    function iniciarMovimiento(ruta) {
+        var busIcon = L.icon({
+            iconUrl: "https://cdn-icons-png.flaticon.com/512/61/61231.png",
+            iconSize: [30, 30]
+        });
+        var bus = L.marker(ruta[0], {icon: busIcon}).addTo(map);
+        var i = 0;
 
-    setInterval(() => {
-        indexRuta = (indexRuta + 1) % ruta.length;
-        bus.setLatLng(ruta[indexRuta]);
+        setInterval(() => {
+            i = (i + 1) % ruta.length;
+            bus.setLatLng(ruta[i]);
 
-        tiempoRestante -= 0.016; 
+            tiempoRestante -= 0.0166;
 
-        if (tiempoRestante <= 0) {
-            paradaActual = (paradaActual + 1) % paradas.length;
-            tiempoRestante = intervalosTiempos[paradaActual];
-        }
-        calcularTiempos();
-    }, 1000);
-}
-
-function calcularTiempos() {
-    let html = "<b>Próximos arribos:</b>";
-    paradas.forEach((p, i) => {
-        let tiempoAcumulado = 0;
-        if (i === paradaActual) {
-            tiempoAcumulado = tiempoRestante;
-        } else {
-            let tempIdx = paradaActual;
-            tiempoAcumulado = tiempoRestante;
-            while (tempIdx !== i) {
-                tiempoAcumulado += intervalosTiempos[tempIdx];
-                tempIdx = (tempIdx + 1) % paradas.length;
+            if(tiempoRestante <= 0) {
+                paradaActual = (paradaActual + 1) % paradas.length;
+                intervalos[paradaActual] = generarAzar(); // Nuevo tiempo aleatorio
+                tiempoRestante = intervalos[paradaActual];
             }
-        }
-        html += `
-        <div style="padding:8px; margin:5px 0; background:${i === paradaActual ? '#e7f3ff' : '#f5f5f5'}; border-left: 4px solid ${i === paradaActual ? '#007bff' : '#ccc'};">
-            🛑 ${p.nombre}<br>⏱ <b>${Math.round(tiempoAcumulado)} min</b>
-        </div>`;
-    });
-    document.getElementById("lista").innerHTML = html;
-}
-</script>
+            actualizarUI();
+        }, 1000);
+    }
 
+    function actualizarUI() {
+        let html = "";
+        paradas.forEach((p, idx) => {
+            let tiempoAcumulado = 0;
+            if (idx === paradaActual) {
+                tiempoAcumulado = tiempoRestante;
+            } else {
+                let cursor = paradaActual;
+                tiempoAcumulado = tiempoRestante;
+                while (cursor !== idx) {
+                    tiempoAcumulado += intervalos[cursor];
+                    cursor = (cursor + 1) % paradas.length;
+                }
+            }
+
+            let esProxima = (idx === paradaActual);
+            html += `
+                <div class="tiempo-item ${esProxima ? 'proxima' : ''}">
+                    <span style="font-size:12px; color:#666">${esProxima ? 'PRÓXIMA PARADA' : 'PARADA'}</span><br>
+                    <b>${p.nombre}</b> 
+                    <span style="float:right; color:#007bff">⏱ ${Math.round(tiempoAcumulado)} min</span>
+                </div>`;
+        });
+        document.getElementById("lista").innerHTML = html;
+    }
+</script>
 </body>
 </html>

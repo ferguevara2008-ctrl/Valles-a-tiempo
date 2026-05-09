@@ -137,50 +137,7 @@ map.fitBounds(rutaCoords);
 
 
 iniciarMovimiento(rutaCoords);
-        let rutaCoords = data.features[0].geometry.coordinates.map(c => [c[1], c[0]]);
-        function colorPorTrafico(){
-    let r = Math.random();
-
-    if(r < 0.5) return "green";
-    if(r < 0.8) return "orange";
-    return "red";
-}
-
-for(let i = 0; i < rutaCoords.length - 1; i++){
-
-    let color;
-
-
-    let trafico = Math.random();
-
-    if(trafico < 0.5){
-        color = "#22c55e"; // verde
-    }
-    else if(trafico < 0.8){
-        color = "#f59e0b"; // naranja
-    }
-    else{
-        color = "#ef4444"; // rojo
-    }
-
-    L.polyline(
-        [
-            rutaCoords[i],
-            rutaCoords[i + 1]
-        ],
-        {
-            color: color,
-            weight: 8,
-            opacity: 1,
-            lineCap: "round",
-            lineJoin: "round"
-        }
-    ).addTo(map);
-
-
-}
-        map.fitBounds(rutaCoords);
-        iniciarMovimiento(rutaCoords);
+        
 
     function iniciarMovimiento(ruta) {
 

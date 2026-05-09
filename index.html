@@ -61,8 +61,8 @@
     }
 
     var paradaActual = 0;
-    var tiempoRestante = 2;
-    var intervalos = paradas.map(() => generarAzar());
+
+var tiempoRestante = generarAzar();
 
     var userMarker;
     if(navigator.geolocation){
@@ -118,47 +118,68 @@ for(let i = 0; i < rutaCoords.length - 1; i++){
 
     setInterval(() => {
 
+ 
+    i = (i + 1) % ruta.length;
+    bus.setLatLng(ruta[i]);
 
-        i = (i + 1) % ruta.length;
-        bus.setLatLng(ruta[i]);
+   
+    tiempoRestante--;
 
-      
-        if(Math.random() < 0.15){
 
-            paradaActual = (paradaActual + 1) % paradas.length;
+    if(tiempoRestante <= 0){
 
-            tiempoRestante = generarAzar();
-        }
 
-        actualizarUI();
+        paradaActual = (paradaActual + 1) % paradas.length;
 
-    }, 1000);
+  
+        tiempoRestante = generarAzar();
+    }
+
+    actualizarUI();
+
+}, 1000);
 }
     function actualizarUI() {
-        let html = "";
-        paradas.forEach((p, idx) => {
-            let tiempoAcumulado = 0;
-            if (idx === paradaActual) {
-                tiempoAcumulado = tiempoRestante;
-            } else {
-                let cursor = paradaActual;
-                tiempoAcumulado = tiempoRestante;
-                while (cursor !== idx) {
-                    tiempoAcumulado += intervalos[cursor];
-                    cursor = (cursor + 1) % paradas.length;
-                }
-            }
 
-            let esProxima = (idx === paradaActual);
-            html += `
-                <div class="tiempo-item ${esProxima ? 'proxima' : ''}">
-                    <span style="font-size:12px; color:#666">${esProxima ? 'PRÓXIMA PARADA' : 'PARADA'}</span><br>
-                    <b>${p.nombre}</b> 
-                    <span style="float:right; color:#007bff">⏱ ${Math.round(tiempoAcumulado)} min</span>
-                </div>`;
-        });
-        document.getElementById("lista").innerHTML = html;
-    }
+    let html = "";
+
+    paradas.forEach((p, idx) => {
+
+        let tiempo;
+
+        // calcular diferencia de paradas
+        let diferencia = idx - paradaActual;
+
+        if(diferencia < 0){
+            diferencia += paradas.length;
+        }
+
+        // tiempo acumulado
+        tiempo = tiempoRestante + (diferencia * 10);
+
+        // máximo 20 aprox visual
+        if(tiempo > 20){
+            tiempo = 20;
+        }
+
+        let esProxima = (idx === paradaActual);
+
+        html += `
+        <div class="tiempo-item ${esProxima ? 'proxima' : ''}">
+            <span style="font-size:12px; color:#666">
+                ${esProxima ? 'PRÓXIMA PARADA' : 'PARADA'}
+            </span><br>
+
+            <b>${p.nombre}</b>
+
+            <span style="float:right; color:#007bff">
+                ⏱ ${Math.round(tiempo)} min
+            </span>
+        </div>`;
+    });
+
+    document.getElementById("lista").innerHTML = html;
+}
 </script>
 </body>
 </html>

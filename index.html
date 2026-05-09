@@ -97,6 +97,8 @@ z-index:1000;
 var map = L.map('map').setView([21.99, -99.01], 14);
 
 var paradaActual = 0; 
+var tiempoBase = 15;
+var tiempoRestante = 15;
     
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
@@ -245,37 +247,53 @@ fetch("ruta.geojson")
 
     setInterval(()=>{
 
-        i++;
-        if(i >= ruta.length) i = 0;
+    i++;
+    if(i >= ruta.length) i = 0;
 
-        bus.setLatLng(ruta[i]);
+    bus.setLatLng(ruta[i]);
 
-        // avanzar parada
-        if(i % 20 === 0){
-            paradaActual++;
-            if(paradaActual >= paradas.length){
-                paradaActual = 0;
-            }
+    tiempoRestante -= 0.1;
+        
+    if(tiempoRestante <= 0){
+
+        paradaActual++;
+
+        if(paradaActual >= paradas.length){
+            paradaActual = 0;
         }
 
-        calcularTiempos();
+        tiempoRestante = tiempoBase;
+    }
 
-    },200);
+    calcularTiempos();
+
+},1000);
 }
 
 
 function calcularTiempos(){
 
-    let html = "<b>Tiempo estimado:</b>";
+    let html = "<b>Tiempo estimado en tiempo real:</b>";
 
     paradas.forEach((p, i)=>{
 
-        let tiempo = Math.abs(i - paradaActual) * 15;
+        let diferencia = i - paradaActual;
+
+        if(diferencia < 0){
+            diferencia += paradas.length;
+        }
+
+        let tiempo = (diferencia * tiempoBase) + tiempoRestante;
 
         html += `
-        <div style="padding:8px; margin:5px 0; background:#f5f5f5; border-radius:8px;">
+        <div style="
+            padding:8px;
+            margin:5px 0;
+            background:#f5f5f5;
+            border-radius:8px;
+        ">
             🛑 ${p.nombre}<br>
-            ⏱ <b>${tiempo} min</b>
+            ⏱ <b>${Math.round(tiempo)} min</b>
         </div>
         `;
     });

@@ -88,7 +88,7 @@
 }
 
 for(let i = 0; i < rutaCoords.length - 1; i++){
-map.fitBounds(rutaCoords);
+
     L.polyline(
         [rutaCoords[i], rutaCoords[i+1]],
         {
@@ -99,31 +99,41 @@ map.fitBounds(rutaCoords);
     ).addTo(map);
 
 }
+        map.fitBounds(rutaCoords);
         iniciarMovimiento(rutaCoords);
     }).catch(err => console.error("Falta archivo ruta.geojson"));
 
     function iniciarMovimiento(ruta) {
-        var busIcon = L.icon({
-            iconUrl: "https://cdn-icons-png.flaticon.com/512/61/61231.png",
-            iconSize: [30, 30]
-        });
-        var bus = L.marker(ruta[0], {icon: busIcon}).addTo(map);
-        var i = 0;
 
-        setInterval(() => {
-            i = (i + 1) % ruta.length;
-            bus.setLatLng(ruta[i]);
+    var busIcon = L.icon({
+        iconUrl: "https://cdn-icons-png.flaticon.com/512/61/61231.png",
+        iconSize: [30, 30]
+    });
 
-            if(Math.random() < 0.15){
+    var bus = L.marker(ruta[0], {icon: busIcon}).addTo(map);
 
-    paradaActual = (paradaActual + 1) % paradas.length;
+    var i = 0;
 
-    tiempoRestante = generarAzar();
+    actualizarUI();
+
+    setInterval(() => {
+
+
+        i = (i + 1) % ruta.length;
+        bus.setLatLng(ruta[i]);
+
+      
+        if(Math.random() < 0.15){
+
+            paradaActual = (paradaActual + 1) % paradas.length;
+
+            tiempoRestante = generarAzar();
+        }
+
+        actualizarUI();
+
+    }, 1000);
 }
-            }
-            actualizarUI();
-        }, 1000);
-
     function actualizarUI() {
         let html = "";
         paradas.forEach((p, idx) => {

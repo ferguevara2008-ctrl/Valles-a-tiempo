@@ -87,14 +87,35 @@
 
 for(let i = 0; i < rutaCoords.length - 1; i++){
 
+    let color;
+
+
+    let trafico = Math.random();
+
+    if(trafico < 0.5){
+        color = "#22c55e"; // verde
+    }
+    else if(trafico < 0.8){
+        color = "#f59e0b"; // naranja
+    }
+    else{
+        color = "#ef4444"; // rojo
+    }
+
     L.polyline(
-        [rutaCoords[i], rutaCoords[i+1]],
+        [
+            rutaCoords[i],
+            rutaCoords[i + 1]
+        ],
         {
-            color: colorPorTrafico(),
-            weight: 7,
-            opacity: 0.9
+            color: color,
+            weight: 8,
+            opacity: 1,
+            lineCap: "round",
+            lineJoin: "round"
         }
     ).addTo(map);
+
 
 }
         map.fitBounds(rutaCoords);
